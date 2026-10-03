@@ -29,4 +29,4 @@ function update() {
 }
 
 setUpMouseListeners();
-setInterval(update, 1);
+setInterval(update, 1); // Apparently this line of code is vulnerable to JavaScript injection sinks 

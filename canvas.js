@@ -1,4 +1,4 @@
-import { checkParticleType } from "./particles.js";
+import { createParticleByType } from "./particles.js";
 import { getRandomInt } from "./util.js";
 
 const canvas = document.getElementById('canvas');
@@ -11,13 +11,13 @@ const brushSlider = document.getElementById("brushRange");
 const brushOutput = document.getElementById("brushSize");
 
 // When you change a slider value it updates its corresponding label
-speedOutput.innerHTML = speedSlider.value;
+speedOutput.innerText = speedSlider.value;
 speedSlider.oninput = function() {
-    speedOutput.innerHTML = this.value;
+    speedOutput.innerText = this.value;
 }
-brushOutput.innerHTML = brushSlider.value;
+brushOutput.innerText = brushSlider.value;
 brushSlider.oninput = function() {
-    brushOutput.innerHTML = this.value;
+    brushOutput.innerText = this.value;
 }
 
 // Setup clear button
@@ -111,7 +111,7 @@ export function createParticle(mousePosition) {
             return;
         }
         // Create a new particle and assign it to (row, col)
-        grid[row][col] = checkParticleType(value);
+        grid[row][col] = createParticleByType(value);
 
         // Recursion to make brush a circle (size is radius)
         if (size > 1) {
@@ -149,7 +149,7 @@ export function setUpMouseListeners() {
     canvas.addEventListener("mousemove", (event) => {
         mousePosition = event;
     });
-    canvas.addEventListener("mouseup", (event) => {
+    canvas.addEventListener("mouseup", (_) => {
         isDragging = false;
     });
 }
@@ -174,7 +174,7 @@ export function clearGrid() {
  */
 export function checkBounds(row, col) {
     // TODO make sure row and col are within the grid
-    return true;
+    return row < numberOfRows && col < numberOfColumns;
 }
 
 /**
@@ -192,6 +192,25 @@ export function checkBounds(row, col) {
  */
 export function moveParticle(row, col, newRow, newCol, swap) {
     // TODO move a particle from (row, col) to (newRow, newCol)
+    if (!checkBounds(row, col) || !checkBounds(newRow, newCol)){
+        return false;
+    }
+
+    if(getParticle(newRow, newCol)) {
+        if (swap && swap(grid[newRow][newCol])) { 
+            const temp = grid[row][col];
+            setParticle(row, col, grid[newRow][newCol]);
+            setParticle(newRow, newCol, temp);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    setParticle(newRow, newCol, grid[row][col]);
+    setParticle(row, col, null);
+
     return true;
 }
 
@@ -205,7 +224,12 @@ export function redraw() {
     // Loop through all elements in the grid
     for (let row = 0; row < grid.length; row++) {
         for (let col = 0; col < grid[0].length; col++) {
-            // TODO draw particles to screen
+            const particle = getParticle(row, col);
+
+            if(particle) {
+                ctx.fillStyle = particle.color;
+                ctx.fillRect(col * eachSize, row * eachSize, eachSize, eachSize)
+            }
         }
     }
 }
